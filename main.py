@@ -83,7 +83,10 @@ def main():
             scrape_apt(f'{BASE_OLX_URL}{apt}', len(apt_list), already_scraped)
             already_scraped += 1
 
-
+        return {
+            'status': 'success',
+            'apts scraped': len(apt_list),
+        }
 
     except Exception as e:
         print(f'Error: {e}')

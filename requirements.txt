@@ -4,3 +4,4 @@ pymongo==4.3.3
 requests==2.28.1
 starlette==0.22.0
 uvicorn==0.20.0
+flask==2.2.2

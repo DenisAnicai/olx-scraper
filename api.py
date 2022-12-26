@@ -1,35 +1,21 @@
 import os
 
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from flask import Flask
 
 os.environ['PATH'] = os.path.dirname(os.path.abspath(__file__)) + os.pathsep + os.environ['PATH']
 from main import main
 
-app = FastAPI()
-
-origins = ["*"]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app = Flask(__name__)
 
 
-@app.get('/')
+@app.route('/')
 def root():
     return main()
 
 
 if __name__ == '__main__':
-    import uvicorn
-
-    uvicorn.run(
-        'api:app',
+    app.run(
         host='0.0.0.0',
         port=8000,
-        workers=1,
+        threaded=True,
     )
