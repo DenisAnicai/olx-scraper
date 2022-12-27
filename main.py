@@ -4,72 +4,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import pymongo
+from constants import *
 
-OLX_URL = 'https://www.olx.ro/d/imobiliare/apartamente-garsoniere-de-vanzare/2-camere/iasi_39939/q-apartament/?currency=EUR&search%5Bprivate_business%5D=private&search%5Border%5D=created_at:desc'
-
-BASE_OLX_URL = 'https://www.olx.ro'
-
-CONNECTION_LINK = 'mongodb://danicai:DeniS14@cluster0-shard-00-00.fkguf.mongodb.net:27017,cluster0-shard-00-01.fkguf.mongodb.net:27017,cluster0-shard-00-02.fkguf.mongodb.net:27017/?ssl=true&replicaSet=atlas-p2fvtk-shard-0&authSource=admin&retryWrites=true&w=majority'
-headers = {
-    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:78.0) Gecko/20100101 Firefox/78.0',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-    'Accept-Language': 'en-US,en;q=0.5',
-    'Connection': 'keep-alive',
-    'Upgrade-Insecure-Requests': '1',
-    'Cache-Control': 'max-age=0',
-}
-proxy = {
-    'http': 'http://165.192.111.151:3129'
-}
-# List of all main locations in Iasi County, Romania
-IASI_LOCATIONS =[
-    'Alexandru cel Bun',
-    'Bucium',
-    'Bucsinescu',
-    'Bularga',
-    'C.U.G.',
-    'Canta',
-    'Cantemir',
-    'Centru',
-    'Centrul Civic',
-    'Copou',
-    'Crucea Rosie',
-    'Dacia',
-    'Frumoasa',
-    'Galata',
-    'Gara',
-    'Manta Rosie',
-    'Mircea cel Batran',
-    'Moara de Foc',
-    'Moara de Vant',
-    'Nicolina',
-    'Oancea',
-    'Pacurari',
-    'Podu Ros',
-    'Podul de Fier',
-    'Poitiers',
-    'Royal town',
-    'Rediu',
-    'Sararie',
-    'Socola',
-    'Stefan cel mare',
-    'Stejar',
-    'Tatarasi',
-    'Targu Cucu',
-    'Tudor Vladimirescu',
-    'Ticau',
-    'Uzinei',
-    'Valea lupului',
-    'Visan',
-    'Zimbru'
-]
-
-IASI_LOCATIONS = [location.lower() for location in IASI_LOCATIONS]
-
-aliases = {
-    'cug': 'c.u.g.',
-    'ultracentral': 'centru',
-}
 
 db = pymongo.MongoClient(CONNECTION_LINK)
 db = db['apartments']['olx']
@@ -97,7 +33,7 @@ def get_all_apartments():
     """Get all apartments from the site"""
     all_apartments = []
     for page in range(1, 10):
-        r = requests.get(f'{OLX_URL}&page={page}', headers=headers, proxies=proxy)
+        r = requests.get(f'{OLX_URL}&page={page}')
         if page != 1 and r.url != f'{OLX_URL}&page={page}':
             break
         soup = BeautifulSoup(r.text, 'html.parser')
@@ -136,7 +72,7 @@ def scrape_apt(apt_url, total_number=0, already_scraped=0):
         print(f'Already in database: {apt_url}')
         return
     """Scrape the apartment"""
-    r = requests.get(apt_url, headers=headers, proxies=proxy)
+    r = requests.get(apt_url)
     soup = BeautifulSoup(r.text, 'html.parser')
     date_posted = soup.find('span', class_='css-19yf5ek').text
     # if date_posted starts with 'Azi la' remove 'Azi la' and add the current date
@@ -227,6 +163,7 @@ def scrape_apt(apt_url, total_number=0, already_scraped=0):
     }
 
     db.insert_one(document)
+    print(document)
     print(f'Inserted {apt_url} into database, left to scrape: {total_number - already_scraped}')
 
 
