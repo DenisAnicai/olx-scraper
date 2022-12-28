@@ -13,15 +13,19 @@ db = db['apartments']['olx']
 
 def main():
     try:
+        global new_apartments
         apt_list = get_all_apartments()
         already_scraped = 0
+        new_apartments = 0
         for apt in apt_list:
             scrape_apt(f'{BASE_OLX_URL}{apt}', len(apt_list), already_scraped)
             already_scraped += 1
 
         return {
             'status': 'success',
-            'apts scraped': len(apt_list),
+            'apts processed': len(apt_list),
+            'new apts added': new_apartments,
+            'timestamp': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
 
     except Exception as e:
@@ -65,8 +69,9 @@ def get_month(param):
     }
     return months[param]
 
-
+new_apartments = 0
 def scrape_apt(apt_url, total_number=0, already_scraped=0):
+    global new_apartments
     # if the apartment is already in the database, skip it
     if db.find_one({'link': apt_url}) is not None:
         print(f'Already in database: {apt_url}')
@@ -144,10 +149,22 @@ def scrape_apt(apt_url, total_number=0, already_scraped=0):
             location = aliases[al]
             break
 
-    for loc in IASI_LOCATIONS:
-        if loc in lower_title:
-            location = loc
-            break
+    if not location:
+        for loc in IASI_LOCATIONS:
+            if loc in lower_title:
+                location = loc
+                break
+
+    if not location:
+        text = description.lower().replace('ș', 's').replace('ț', 't').replace('ă', 'a').replace('â', 'a').replace('î', 'i').split(' ')
+        for word in text:
+            if word in aliases:
+                location = aliases[word]
+                break
+            if word in IASI_LOCATIONS:
+                location = word
+                break
+
 
     # insert everything into a document
     document = {
@@ -159,12 +176,13 @@ def scrape_apt(apt_url, total_number=0, already_scraped=0):
         'link': apt_url,
         'attributes': attributes,
         'raw_date': raw_date,
-        'date_scraped': datetime.datetime.now().strftime("%d/%m/%Y")
+        'date_scraped': datetime.datetime.now().timestamp()
     }
 
     db.insert_one(document)
     print(document)
     print(f'Inserted {apt_url} into database, left to scrape: {total_number - already_scraped}')
+    new_apartments += 1
 
 
 if __name__ == '__main__':
