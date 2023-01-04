@@ -2,7 +2,7 @@ OLX_URL = 'https://www.olx.ro/d/imobiliare/apartamente-garsoniere-de-vanzare/2-c
 
 BASE_OLX_URL = 'https://www.olx.ro'
 
-CONNECTION_LINK = 'mongodb+srv://danicai:DeniS14@cluster0.fkguf.mongodb.net/?retryWrites=true&w=majority'
+CONNECTION_LINK = 'mongodb+srv://danicai:1234@cluster0.fkguf.mongodb.net/?retryWrites=true&w=majority'
 
 # List of all main locations in Iasi County, Romania
 IASI_LOCATIONS =[
@@ -31,6 +31,7 @@ IASI_LOCATIONS =[
     'Podu Ros',
     'Podul de Fier',
     'Poitiers',
+    'Piata Unirii',
     'Royal town',
     'Rediu',
     'Sararie',
