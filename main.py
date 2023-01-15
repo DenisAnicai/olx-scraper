@@ -79,81 +79,100 @@ def scrape_apt(apt_url, total_number=0, already_scraped=0):
     """Scrape the apartment"""
     r = requests.get(apt_url)
     soup = BeautifulSoup(r.text, 'html.parser')
-    date_posted = soup.find('span', class_='css-19yf5ek').text
-    # if date_posted starts with 'Azi la' remove 'Azi la' and add the current date
-    if date_posted.startswith('Azi la'):
-        date_posted = date_posted.replace('Azi la ', '')
-        date_posted = f'{datetime.datetime.now().strftime("%d/%m/%Y")}'
-    else:
-        # date is in format '24 decembrie 2022' for example
-        date_posted = date_posted.split(' ')
-        date_posted = f'{date_posted[0]}/{get_month(date_posted[1])}/{date_posted[2]}'
+    try:
+        date_posted = soup.find('span', class_='css-19yf5ek').text
+        # if date_posted starts with 'Azi la' remove 'Azi la' and add the current date
+        if date_posted.startswith('Azi la'):
+            date_posted = date_posted.replace('Azi la ', '')
+            date_posted = f'{datetime.datetime.now().strftime("%d/%m/%Y")}'
+        else:
+            # date is in format '24 decembrie 2022' for example
+            date_posted = date_posted.split(' ')
+            date_posted = f'{date_posted[0]}/{get_month(date_posted[1])}/{date_posted[2]}'
+    except:
+        date_posted = ''
 
-    # get the price
-    price = soup.find('h3', class_='css-19cr6mc-TextStyled er34gjf0').text
-    # if price doesn't start with Schimb
-    if not re.match(r'Schimb.*', price):
-        price = price.split(' ')
-        try:
-            price = f'{price[0]},{price[1]}€'
-        except IndexError:
-            price = f'{price[0]}€'
-        price = int(re.sub(r'\D', '', price))
-    else:
+    try:
+        # get the price
+        price = soup.find('h3', class_='css-19cr6mc-TextStyled er34gjf0').text
+        # if price doesn't start with Schimb
+        if not re.match(r'Schimb.*', price):
+            price = price.split(' ')
+            try:
+                price = f'{price[0]},{price[1]}€'
+            except IndexError:
+                price = f'{price[0]}€'
+            price = int(re.sub(r'\D', '', price))
+    except:
         return
 
     # get the title
-    title = soup.find('h1', class_='css-swd4zc-TextStyled er34gjf0').text
-
-    # get attributes
-    attributes = soup.find_all('li', class_='css-ox1ptj')
-    attributes = [attr.text for attr in attributes if attr.text != 'Persoana fizica']
-
-    attributes = [attr.split(':') for attr in attributes]
     try:
-        attributes = {attr[0]: attr[1].strip() for attr in attributes}
-    except IndexError:
-        attributes = {attr[0]: '' for attr in attributes}
+        title = soup.find('h1', class_='css-swd4zc-TextStyled er34gjf0').text
+    except:
+        title = ''
+
+    try:
+        # get attributes
+        attributes = soup.find_all('li', class_='css-ox1ptj')
+        attributes = [attr.text for attr in attributes if attr.text != 'Persoana fizica']
+
+        attributes = [attr.split(':') for attr in attributes]
+        try:
+            attributes = {attr[0]: attr[1].strip() for attr in attributes}
+        except IndexError:
+            attributes = {attr[0]: '' for attr in attributes}
+    except:
+        attributes = {}
 
 
-    # get raw_date
-    raw_date = ''
-    if attributes.get('An constructie'):
-        i = attributes['An constructie']
-        if 'Dupa' in i:
-            raw_date = i.split(' ')
-            raw_date = f'{raw_date[1]}'
-            raw_date = f'01/01/{raw_date}'
-        elif 'inainte de' in i:
-            raw_date = i.split(' ')
-            raw_date = f'{raw_date[2]}'
-            raw_date = f'01/01/{raw_date}'
-        elif '–' in i:
-            # date is of format 1977 - 2000
-            raw_date = i.split('–')
-            raw_date = f'01/01/{raw_date[0].strip()}'
-        else:
-            raw_date = f'01/01/{i}'
+    try:
+        # get raw_date
+        raw_date = ''
+        if attributes.get('An constructie'):
+            i = attributes['An constructie']
+            if 'Dupa' in i:
+                raw_date = i.split(' ')
+                raw_date = f'{raw_date[1]}'
+                raw_date = f'01/01/{raw_date}'
+            elif 'inainte de' in i:
+                raw_date = i.split(' ')
+                raw_date = f'{raw_date[2]}'
+                raw_date = f'01/01/{raw_date}'
+            elif '–' in i:
+                # date is of format 1977 - 2000
+                raw_date = i.split('–')
+                raw_date = f'01/01/{raw_date[0].strip()}'
+            else:
+                raw_date = f'01/01/{i}'
 
-        raw_date = datetime.datetime.strptime(raw_date, '%d/%m/%Y').timestamp()
+            raw_date = datetime.datetime.strptime(raw_date, '%d/%m/%Y').timestamp()
+    except:
+        raw_date = ''
 
-    # get description
-    description = soup.find('div', class_='css-12l22jb-TextStyled er34gjf0').text
+    try:
+        # get description
+        description = soup.find('div', class_='css-12l22jb-TextStyled er34gjf0').text
+    except:
+        description = ''
 
-    # get location from title
-    lower_title = title.lower()
-    lower_title = lower_title.replace('ș', 's').replace('ț', 't').replace('ă', 'a').replace('â', 'a').replace('î', 'i')
-    location = ''
-    for al in aliases:
-        if al in lower_title:
-            location = aliases[al]
-            break
-
-    if not location:
-        for loc in IASI_LOCATIONS:
-            if loc in lower_title:
-                location = loc
+    try:
+        # get location from title
+        lower_title = title.lower()
+        lower_title = lower_title.replace('ș', 's').replace('ț', 't').replace('ă', 'a').replace('â', 'a').replace('î', 'i')
+        location = ''
+        for al in aliases:
+            if al in lower_title:
+                location = aliases[al]
                 break
+
+        if not location:
+            for loc in IASI_LOCATIONS:
+                if loc in lower_title:
+                    location = loc
+                    break
+    except:
+        location = ''
 
     if not location:
         text = description.lower().replace('ș', 's').replace('ț', 't').replace('ă', 'a').replace('â', 'a').replace('î', 'i').split(' ')
