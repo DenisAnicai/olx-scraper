@@ -94,7 +94,7 @@ def scrape_apt(apt_url, total_number=0, already_scraped=0):
 
     try:
         # get the price
-        price = soup.find('h3', class_='css-19cr6mc-TextStyled er34gjf0').text
+        price = soup.find('h3', class_='css-ddweki er34gjf0').text
         # if price doesn't start with Schimb
         if not re.match(r'Schimb.*', price):
             price = price.split(' ')
@@ -108,7 +108,7 @@ def scrape_apt(apt_url, total_number=0, already_scraped=0):
 
     # get the title
     try:
-        title = soup.find('h1', class_='css-swd4zc-TextStyled er34gjf0').text
+        title = soup.find('h1', class_='css-b5m1rv er34gjf0').text
     except:
         title = ''
 
@@ -152,7 +152,7 @@ def scrape_apt(apt_url, total_number=0, already_scraped=0):
 
     try:
         # get description
-        description = soup.find('div', class_='css-12l22jb-TextStyled er34gjf0').text
+        description = soup.find('div', class_='css-bgzo2k er34gjf0').text
     except:
         description = ''
 
